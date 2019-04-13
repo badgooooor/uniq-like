@@ -36,9 +36,23 @@ open:		@ == open file ==
 		svc	0
 		mov	r0, r4		@ return file descriptor
 
-		@ test reading
-		ldrb	r3, [r1, #0]
-		ldrb	r5, [r1, #1]
+		mov	r4, #0		@ iterator
+		ldr	r6, =file_buffer@ file buffer address.
+		ldr	r1, =payload
+loop:		ldrb	r5, [r6, r4]	@ read first char.
+		strb	r5, [r1, #0]
+		cmp	r5, #0		@ check if it is null.
+		beq	exit
+
+		@ == checking payload ==
+		mov	r7, #4
+		mov	r0, #1
+		mov	r2, #1
+		ldr	r1,=payload
+		swi	0
+
+		add	r4, r4, #1	@ add 1 to iterator
+		b	loop
 
 exit:		pop	{r4, lr}
 		mov	r7, #1		@ exit
@@ -61,3 +75,4 @@ errmsgend:
 file:		.asciz	"/home/pi/uniq-like/test-1.txt"
 file_buffer:	.space	10000
 file_eof:
+payload:	.space  1
