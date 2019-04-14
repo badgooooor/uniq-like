@@ -57,16 +57,23 @@ loop:		ldrb	r8, [r6, r4]	@ read first char.
 
 		b	loop
 
-		@ ==== print line ====
+		@ ==== debug : print current and previous line ====
 printLine:	bl	printPrev
 		bl	printCurr
 
-		@ == add copy string ==
+		@ ==> add compare string ==
+
+		@ == Copy string ==
 		ldr	r2, =prev_text	@ previous text address
 		mov	r9, #0		@ reset previous line iterator
+		bl	copyLoop
 
+		mov	r5, #0		@ reset line iterator
+		b	loop
+
+		@ ==  Copy current line to previous line ==
 copyLoop:	cmp	r5, r9
-		beq	afterLoop
+		beq	endCopyLoop
 
 		ldrb	r8, [r1, r9]	@ load text
 		strb	r8, [r2, r9]	@ copy
@@ -74,8 +81,7 @@ copyLoop:	cmp	r5, r9
 		add	r9, r9, #1
 		b	copyLoop
 
-afterLoop:	mov	r5, #0		@ reset line iterator
-		b	loop
+endCopyLoop:	mov	pc, lr
 
 		@ == Print current line ==
 printCurr:	mov	r7, #4		@ syscall
