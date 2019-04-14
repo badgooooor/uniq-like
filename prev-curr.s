@@ -62,12 +62,29 @@ printLine:	bl	printPrev
 		bl	printCurr
 
 		@ == add copy string ==
+		ldr	r2, =prev_text	@ previous text address
+		mov	r9, #0		@ reset previous line iterator
 
-		mov	r5, #0		@ reset line iterator
+copyLoop:	cmp	r5, r9
+		beq	afterLoop
+
+		ldrb	r8, [r1, r9]	@ load text
+		strb	r8, [r2, r9]	@ copy
+
+		add	r9, r9, #1
+		b	copyLoop
+
+afterLoop:	mov	r5, #0		@ reset line iterator
 		b	loop
 
 		@ == Print current line ==
 printCurr:	mov	r7, #4		@ syscall
+		mov	r0, #1		@ monitor
+		mov	r2, #(curr_end-curr_msg)	@ string length
+		ldr	r1, =curr_msg	@ string address
+		swi	0
+
+		mov	r7, #4		@ syscall
 		mov	r0, #1		@ monitor
 		mov	r2, r5		@ string length
 		ldr	r1, =curr_text	@ string address
@@ -78,7 +95,13 @@ printCurr:	mov	r7, #4		@ syscall
 		@ == Print previous line ==
 printPrev:	mov	r7, #4		@ syscall
 		mov	r0, #1		@ monitor
-		mov	r2, r5		@ string length
+		mov	r2, #(prev_end-prev_msg)	@ string length
+		ldr	r1, =prev_msg
+		swi	0
+
+		mov	r7, #4		@ syscall
+		mov	r0, #1		@ monitor
+		mov	r2, r9		@ string length
 		ldr	r1, =prev_text	@ string address
 		swi	0
 
@@ -104,6 +127,8 @@ errmsg:		.asciz	"open failed T_T"
 errmsgend:
 curr_msg:	.asciz	"Current Line : "
 curr_end:
+prev_msg:	.asciz	"Previous Line : "
+prev_end:
 file:		.asciz	"/home/pi/uniq-like/test-1.txt"
 file_buffer:	.space	10000
 file_eof:
