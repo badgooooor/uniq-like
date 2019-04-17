@@ -72,8 +72,8 @@ compareLoop:	ldr	r1, =curr_text			@ Load current text addr
 		cmp	r8, r10				@ compare character
 		bne	promptRes
 
-		cmp	r9, r5				@ check if end of string
-		beq	promptNone
+		cmp	r9, r11				@ check if end of string
+		beq	preCopy
 
 		add	r11, r11, #1			@ add iterator
 		b	compareLoop
@@ -84,7 +84,8 @@ printLine:	bl	printPrev
 		bl	printCurr
 
 @ ===== Move current-line string to previous-line string =====
-preCopy:	ldr	r2, =prev_text			@ previous text address
+preCopy:	ldr	r1, =curr_text			@ current text address
+		ldr	r2, =prev_text			@ previous text address
 		mov	r9, #0				@ reset previous line iterator
 		bl	copyLoop
 
@@ -107,8 +108,8 @@ endCopyLoop:	mov	pc, lr
 promptRes:	bl	printCurr
 		b	preCopy
 
-promptNone:	bl	lineF
-		bl 	printEq
+promptNone:	@bl	lineF
+		@bl 	printEq
 		@bl	printLine
 		bl	lineF
 		b	preCopy
@@ -120,13 +121,7 @@ promptEq:	bl	printEq				@ Branch for call prompt
 		b	printLine
 
 		@ == Print current line ==
-printCurr:	mov	r7, #4				@ syscall | Prompt message
-		mov	r0, #1				@ monitor
-		mov	r2, #(curr_end-curr_msg)	@ string length
-		ldr	r1, =curr_msg			@ string address
-		swi	0
-
-		mov	r7, #4				@ syscall | current text
+printCurr:	mov	r7, #4				@ syscall | current text
 		mov	r0, #1				@ monitor
 		mov	r2, r5				@ string length
 		ldr	r1, =curr_text			@ string address
@@ -202,7 +197,7 @@ eq_end:
 neq_msg:	.asciz	"[NE] "
 neq_end:
 line_feed:	.asciz	"\n"
-file:		.asciz	"/home/pi/uniq-like/test-1.txt"
+file:		.asciz	"/home/pi/uniq-like/test-2.txt"
 file_buffer:	.space	10000
 file_eof:
 payload:	.space  1
