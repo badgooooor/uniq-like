@@ -70,18 +70,47 @@ compareLoop:	ldr	r1, =curr_text			@ Load current text addr
 		ldrb	r10,[r1, r11]			@ Load previous string
 
 		cmp	r8, r10				@ compare character
-		bne	promptRes
+		bne	lineNEQ
 
 		cmp	r9, r11				@ check if end of string
-		beq	preCopy
+		beq	lineEQ
 
 		add	r11, r11, #1			@ add iterator
 		b	compareLoop
 
-@ Check args
-@ then distribute to each args
+@ ===== Get argument and check out for each case =====
+@ == Get argument ==
+getArgs:	ldr	r1, =args
+		ldrb	r2, [r1, #0]
+		mov	pc, lr
 
-@ ===== Logic in each case =====
+@ == Check for right case ==
+lineEQ:		bl	getArgs
+
+		cmp	r2, #100			@ check for -d
+		beq	lineEQ_d
+
+		cmp	r2, #117			@ check for -u
+		beq	lineEQ_u
+
+		b	lineEQ_n			@ default case
+
+lineNEQ:	bl	getArgs
+
+		cmp	r2, #100			@ check for -d
+		beq	lineNEQ_d
+
+		cmp	r2, #117			@ check for -u
+		beq	lineNEQ_u
+
+		b	lineNEQ_n			@ default case
+
+@ ===== Logic for each case =====
+@ == normal case ==
+lineEQ_n:	b	preCopy
+
+lineNEQ_n:	b	promptRes
+
 @ == option -u  => get unique line ==
 lineEQ_u:	add	r12, r12, #1			@ add line count
 		b	preCopy
@@ -101,7 +130,7 @@ lineNEQ_d:	mov	r12, #1				@ reset line count
 		b	preCopy
 
 @ == DEBUG Prompt current string and previous string ==
-  == Intentionally place here before copying         ==
+@  == Intentionally place here before copying         ==
 printLine:	bl	printPrev
 		bl	printCurr
 
@@ -129,6 +158,9 @@ endCopyLoop:	mov	pc, lr
 @ ===== Message functions =====
 @ == Print result ==
 promptRes:	bl	printCurr
+		b	preCopy
+
+promptPrev:	bl	printPrev
 		b	preCopy
 
 promptNeq:	bl	printNeq			@ Branch for call prompt
@@ -214,8 +246,8 @@ eq_end:
 neq_msg:	.asciz	"[NE] "
 neq_end:
 line_feed:	.asciz	"\n"
-args:       .asciz  "n"
-file:		.asciz	"/home/pi/uniq-like/test-2.txt"
+args:       	.asciz  "d"
+file:		.asciz	"/home/pi/uniq-like/test-1.txt"
 file_buffer:	.space	10000
 file_eof:
 payload:	.space  1
