@@ -78,6 +78,9 @@ compareLoop:	ldr	r1, =curr_text			@ Load current text addr
 		add	r11, r11, #1			@ add iterator
 		b	compareLoop
 
+@ Check args
+@ then distribute to each args
+
 @ ===== Logic in each case =====
 @ == option -u  => get unique line ==
 lineEQ_u:	add	r12, r12, #1			@ add line count
