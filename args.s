@@ -1,7 +1,9 @@
 		.text
 		.global _start
 
-_start:		ldr	r5, [sp]	@ argc value
+_start:		b	getArgs
+
+getArgs: 	ldr	r5, [sp]	@ argc value
 		mov	r8, #8		@ argc address
 		ldr	r4, [sp, r8]
 
@@ -12,16 +14,10 @@ _start:		ldr	r5, [sp]	@ argc value
 		mov	r8, #0		@ iterator for argument's buffer
 		bl	strlen		@ read
 
-		mov	r2, r0
-		@bl	_write		@ write first parameter
-
 		add	r4, r4, r0	@ shifting address
 		add	r4, r4, #1
 		mov	r1, r4
 		bl	strlen		@ read
-
-		mov	r2, r0
-		@bl	_write
 
 		bl	_writeBuffer
 
