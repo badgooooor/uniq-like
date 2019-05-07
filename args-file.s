@@ -20,8 +20,7 @@ getArgs: 	ldr	r5, [sp]	@ argc value
 		mov	r1, r4
 		bl	strlen		@ read
 
-		bl	_writeBuffer
-
+@ ===== Argument processing =====
 assignArg:	ldr	r1, =args_buffer
 		ldrb	r1, [r1, #1]
 
@@ -29,6 +28,22 @@ assignArg:	ldr	r1, =args_buffer
 		strb	r1, [r0, #0]
 
 		bl	_printOption
+
+		mov	r9, #2		@ iterator for getting filename
+		ldr	r2, =file
+getFileName:	ldr	r1, =args_buffer@ get file buffer
+		ldrb	r0, [r1, r9]
+
+		cmp	r0, #0
+		beq	postArgs
+
+		add	r8, r9, #17	@ iterator for copy filename to directory
+		strb	r0, [r2, r8]
+		add	r9, r9, #1
+
+		b	getFileName
+
+postArgs:	bl	_printFileName
 
 @ ===== Open & read file =====
 open:		push	{r4, lr}
@@ -74,10 +89,10 @@ _write:		push 	{r0-r7}
 		pop	{r0-r7}
 		mov	pc, lr
 
-_writeBuffer:	mov	r7, #4		@ syscall number
-		mov	r0, #1		@ stdout
+_writeBuffer:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ stdout
 		mov	r2, #(args_eof-args_buffer)	@ string length
-		ldr	r1, =args_buffer
+		ldr	r1, =args_buffer		@ address
 		swi	0
 		mov	pc, lr
 
@@ -85,6 +100,13 @@ _printOption:	mov	r7, #4		@ syscall number
 		mov	r0, #1		@ stdout
 		mov	r2, #2		@ length
 		ldr	r1, =args	@ address
+		swi	0
+		mov	pc, lr
+
+_printFileName:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ stdout
+		mov	r2, #(file_end-file)		@ strign length
+		ldr	r1, =file
 		swi	0
 		mov	pc, lr
 
@@ -118,6 +140,7 @@ errmsg:		.asciz	"open failed T_T"
 errmsgend:
 args:		.asciz	"n"
 file:		.asciz	"/home/pi/uniq-like/test-1.txt"
+file_end:
 file_buffer:	.space	10000
 file_eof:
 payload:	.space 	1
