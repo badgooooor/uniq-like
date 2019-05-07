@@ -27,15 +27,13 @@ assignArg:	ldr	r1, =args_buffer
 		ldr	r0, =args
 		strb	r1, [r0, #0]
 
-		bl	_printOption
-
 		mov	r9, #3		@ iterator for getting filename
 		ldr	r2, =file
 getFileName:	ldr	r1, =args_buffer@ get file buffer
 		ldrb	r0, [r1, r9]
 
 		cmp	r0, #0
-		beq	postArgs
+		beq	open
 
 		add	r8, r9, #16	@ iterator for copy filename to directory
 		strb	r0, [r2, r8]
@@ -94,18 +92,32 @@ loop:		ldrb	r8, [r6, r4]			@ read character
 		beq	exit
 
 		cmp	r8, #10				@ check if it is line feed
-		beq	printLine
+		beq	preCompare
 
 		b	loop
 
-printLine:	bl	_printPrev
-		bl	printPrev			@ debug : print what is on the line
-		bl	_printCurr
-		bl	printCurr
+@ === compare current & previous line ===
+preCompare:	cmp	r9, r5				@ short cut by check length of both string
+		bne	NflagNEQ			@ branch to NEQ case
+		mov	r11, #0				@ iterator for string comparison
+		b	compareLoop
 
-		@ add compare string
+compareLoop:	ldr	r1, =curr_text			@ load current text addr
+		ldrb	r8, [r1, r11]			@ load current char
+		ldr	r1, =prev_text			@ load previous text addr
+		ldrb	r10,[r1, r11]			@ load previous char
 
-		@ == copy string ==
+		cmp	r8, r10				@ compare character
+		bne	NflagNEQ			@ branch to NEQ case
+
+		cmp	r9, r11				@ check end of string
+		beq	NflagEQ				@ branch to EQ case
+
+		add	r11, r11, #1			@ add iterator
+		b	compareLoop
+
+@ == copy current line to previous line ==
+preCopy:	ldr	r1, =curr_text			@ current text address
 		ldr	r2, =prev_text			@ previous text address
 		mov	r9, #0				@ reset previous line iterator
 		bl	copyLoop
@@ -113,7 +125,6 @@ printLine:	bl	_printPrev
 		mov	r5, #0				@ reset line iterator
 		b	loop
 
-@ === copy current line to previous line ===
 copyLoop:	cmp	r5, r9
 		beq	endCopyLoop
 
@@ -132,6 +143,16 @@ exit:		pop	{r4, lr}
 @ =======================================================================
 @ Component functions
 @ =======================================================================
+@ == -n option :: equal ==
+NflagEQ:	b	preCopy
+
+@ == -n option :: unequal ==
+NflagNEQ:	bl	printCurr
+		b	preCopy
+
+@ == print normal logic result (current text)
+printRes:	bl	printCurr
+		b	preCopy
 
 @ = debug : argument buffer =
 _writeBuffer:	mov	r7, #4				@ syscall number
@@ -165,6 +186,25 @@ _printPayload:	mov	r7, #4				@ syscall number
 		swi	0
 		mov	pc, lr
 
+@ = debug : prompt equal =
+_promptEq:	bl	_printEQ
+		b	_printLine
+
+@ = debug : prompt unequal =
+_promptNeq:	bl	_printNEQ
+		b	_printLine
+
+@ = debug : prompt unequal since string length =
+_promptNel:	bl	_printNEL
+		b	_printLine
+
+@ = debug : prompt line =
+_printLine:	bl	_printCurr
+		bl	printCurr
+		bl	_printPrev
+		bl	printPrev
+		b	preCopy
+
 @ = debug : current line beautifully :) =
 _printCurr:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
@@ -181,6 +221,30 @@ _printPrev:	mov	r7, #4				@ syscall number
 		swi	0
 		mov	pc, lr
 
+@ = debug : equal!! =
+_printEQ:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ monitor
+		mov	r2, #5				@ length
+		ldr	r1, =eq_msg			@ address
+		swi	0
+		mov	pc, lr
+
+@ = debug : not equal =
+_printNEQ:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ monitor
+		mov	r2, #6				@ length
+		ldr	r1, =neq_msg			@ address
+		swi	0
+		mov	pc, lr
+
+@ = debug : not equal from string length =
+_printNEL:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ monitor
+		mov	r2, #6				@ length
+		ldr	r1, =nel_msg
+		swi	0
+		mov	pc, lr
+
 @ = current line =
 printCurr:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
@@ -194,6 +258,14 @@ printPrev:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
 		mov	r2, r9				@ string length
 		ldr	r1, =prev_text			@ address
+		swi	0
+		mov	pc, lr
+
+@ = line feed =
+lineF:		mov	r7, #4				@ syscall number
+		mov	r0, #1				@ stdout
+		mov	r2, #1				@ string length
+		ldr	r1, =line_feed			@ address
 		swi	0
 		mov	pc, lr
 
@@ -227,10 +299,14 @@ curr_msg:	.asciz	"Current Line : "
 curr_end:
 prev_msg:	.asciz	"Previous Line : "
 prev_end:
+eq_msg:		.asciz	"[EQ] "
+neq_msg:	.asciz	"[NEQ] "
+nel_msg:	.asciz	"[NEL] "
 errmsg:		.asciz	"open failed T_T"
 errmsgend:
 args:		.asciz	"n"
-file:		.asciz	"/home/pi/uniq-like/test-1.txt"
+line_feed:	.asciz	"\n"
+file:		.asciz	"/home/pi/uniq-like/          "
 file_end:
 file_buffer:	.space	10000
 file_eof:
