@@ -79,6 +79,7 @@ open:		push	{r4, lr}
 preLoop:	mov	r4, #0				@ main iterator
 		mov	r5, #0				@ current line iterator
 		mov	r9, #0				@ previous line iterator
+		mov	r12, #1				@ line count (for same text streak)
 		ldr	r6, =file_buffer		@ file buffer address
 		ldr	r1, =curr_text			@ current text address
 
@@ -123,10 +124,16 @@ getOption:	ldr	r1, =args
 
 lineEQ:		bl	getOption
 
+		cmp	r1, #117
+		beq	UflagEQ
+
 		cmp	r1, #110
 		beq	NflagEQ
 
 lineNEQ:	bl	getOption
+
+		cmp	r1, #117
+		beq	UflagNEQ
 
 		cmp	r1, #110
 		beq	NflagNEQ
@@ -158,15 +165,30 @@ exit:		pop	{r4, lr}
 @ =======================================================================
 @ Component functions
 @ =======================================================================
+
 @ == -n option :: equal ==
 NflagEQ:	b	preCopy
 
 @ == -n option :: unequal ==
-NflagNEQ:	bl	printCurr
+NflagNEQ:	b	printRes
+
+@ == -u option :: equal ==
+UflagEQ:	add	r12, r12, #1			@ add line count
+		b	preCopy
+
+@ == -u option :: unequal ==
+UflagNEQ:	cmp	r12, #1
+		beq	printRes2
+		mov	r12, #1
 		b	preCopy
 
 @ == print normal logic result (current text)
 printRes:	bl	printCurr
+		b	preCopy
+
+@ == print previous text result
+printRes2:	bl	printPrev
+		mov	r12, #1
 		b	preCopy
 
 @ = debug : argument buffer =
@@ -273,14 +295,6 @@ printPrev:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
 		mov	r2, r9				@ string length
 		ldr	r1, =prev_text			@ address
-		swi	0
-		mov	pc, lr
-
-@ = line feed =
-lineF:		mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #1				@ string length
-		ldr	r1, =line_feed			@ address
 		swi	0
 		mov	pc, lr
 
