@@ -130,6 +130,9 @@ lineEQ:		bl	getOption
 		cmp	r1, #110
 		beq	NflagEQ
 
+		cmp	r1, #100
+		beq	DflagEQ
+
 lineNEQ:	bl	getOption
 
 		cmp	r1, #117
@@ -137,6 +140,9 @@ lineNEQ:	bl	getOption
 
 		cmp	r1, #110
 		beq	NflagNEQ
+
+		cmp	r1, #100
+		beq	DflagNEQ
 
 @ == copy current line to previous line ==
 preCopy:	ldr	r1, =curr_text			@ current text address
@@ -181,6 +187,17 @@ UflagNEQ:	cmp	r12, #1
 		beq	printRes2
 		mov	r12, #1
 		b	preCopy
+
+@ == -d option :: equal ==
+DflagEQ:	add	r12, r12, #1			@ add line count
+		cmp	r12, #2
+		beq	printRes
+		b	preCopy
+
+@ == -d option :: unequal ==
+DflagNEQ:	mov	r12, #1
+		b	preCopy
+
 
 @ == print normal logic result (current text)
 printRes:	bl	printCurr
