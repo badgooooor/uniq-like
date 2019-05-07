@@ -4,7 +4,7 @@
 _start:		b	getArgs
 
 @ ===== Get argument and store options & file's name =====
-getArgs: 	ldr	r5, [sp]	@ argc value
+getArgs:	ldr	r5, [sp]	@ argc value
 		mov	r8, #8		@ argc address
 		ldr	r4, [sp, r8]
 
@@ -29,7 +29,7 @@ assignArg:	ldr	r1, =args_buffer
 
 		bl	_printOption
 
-		mov	r9, #2		@ iterator for getting filename
+		mov	r9, #3		@ iterator for getting filename
 		ldr	r2, =file
 getFileName:	ldr	r1, =args_buffer@ get file buffer
 		ldrb	r0, [r1, r9]
@@ -37,7 +37,7 @@ getFileName:	ldr	r1, =args_buffer@ get file buffer
 		cmp	r0, #0
 		beq	postArgs
 
-		add	r8, r9, #17	@ iterator for copy filename to directory
+		add	r8, r9, #16	@ iterator for copy filename to directory
 		strb	r0, [r2, r8]
 		add	r9, r9, #1
 
@@ -77,18 +77,31 @@ open:		push	{r4, lr}
 		svc	0
 		mov	r0, r4		@ return file descriptor
 
+@ ===== Read file buffer =====
+		mov	r4, #0				@ iterator
+		ldr	r6, =file_buffer		@ file buffer address
+		ldr	r1, =payload
+
+loop:		ldrb	r5, [r6, r4]			@ read char
+		strb	r5, [r1, #0]
+
+		cmp	r5, #0				@ check if it is null
+		beq	exit
+
+		bl	_printPayload
+
+		add	r4, r4, #1			@ add iterator
+		b	loop
+
 exit:		pop	{r4, lr}
 		mov	r7, #1
 		swi	0
 
-_write:		push 	{r0-r7}
-		mov	r7, #4		@ syscall number
-		mov	r0, #1		@ stdout is monitor
-		mov	r1, r4 		@ string located
-		swi	0
-		pop	{r0-r7}
-		mov	pc, lr
+@ =======================================================================
+@ Component functions
+@ =======================================================================
 
+@ = debug : argument buffer =
 _writeBuffer:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
 		mov	r2, #(args_eof-args_buffer)	@ string length
@@ -96,17 +109,27 @@ _writeBuffer:	mov	r7, #4				@ syscall number
 		swi	0
 		mov	pc, lr
 
-_printOption:	mov	r7, #4		@ syscall number
-		mov	r0, #1		@ stdout
-		mov	r2, #2		@ length
-		ldr	r1, =args	@ address
+@ = debug : argument option =
+_printOption:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ stdout
+		mov	r2, #2				@ length
+		ldr	r1, =args			@ address
 		swi	0
 		mov	pc, lr
 
+@ = debug : argument file name =
 _printFileName:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
 		mov	r2, #(file_end-file)		@ strign length
-		ldr	r1, =file
+		ldr	r1, =file			@ address
+		swi	0
+		mov	pc, lr
+
+@ = debug : payload from file buffer =
+_printPayload:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ stdout
+		mov	r2, #2				@ length
+		ldr	r1, =payload			@ address
 		swi	0
 		mov	pc, lr
 
@@ -143,4 +166,4 @@ file:		.asciz	"/home/pi/uniq-like/test-1.txt"
 file_end:
 file_buffer:	.space	10000
 file_eof:
-payload:	.space 	1
+payload:	.asciz  " "
