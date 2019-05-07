@@ -98,7 +98,7 @@ loop:		ldrb	r8, [r6, r4]			@ read character
 
 @ === compare current & previous line ===
 preCompare:	cmp	r9, r5				@ short cut by check length of both string
-		bne	NflagNEQ			@ branch to NEQ case
+		bne	lineNEQ				@ branch to NEQ case
 		mov	r11, #0				@ iterator for string comparison
 		b	compareLoop
 
@@ -108,13 +108,28 @@ compareLoop:	ldr	r1, =curr_text			@ load current text addr
 		ldrb	r10,[r1, r11]			@ load previous char
 
 		cmp	r8, r10				@ compare character
-		bne	NflagNEQ			@ branch to NEQ case
+		bne	lineNEQ				@ branch to NEQ case
 
 		cmp	r9, r11				@ check end of string
-		beq	NflagEQ				@ branch to EQ case
+		beq	lineEQ				@ branch to EQ case
 
 		add	r11, r11, #1			@ add iterator
 		b	compareLoop
+
+@ === distribute to each option ===
+getOption:	ldr	r1, =args
+		ldrb	r1, [r1, #0]
+		mov	pc, lr
+
+lineEQ:		bl	getOption
+
+		cmp	r1, #110
+		beq	NflagEQ
+
+lineNEQ:	bl	getOption
+
+		cmp	r1, #110
+		beq	NflagNEQ
 
 @ == copy current line to previous line ==
 preCopy:	ldr	r1, =curr_text			@ current text address
