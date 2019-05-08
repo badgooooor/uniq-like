@@ -8,10 +8,16 @@ getArgs:	ldr	r5, [sp]	@ argc value
 		mov	r8, #8		@ argc address
 		ldr	r4, [sp, r8]
 
-		cmp	r4, #0
+		cmp	r5, #1
 		beq	exit
 
-		mov	r1, r4
+		cmp	r5, #2
+		beq	exit
+
+		cmp	r5, #3
+		beq	get2Args
+
+get2Args:	mov	r1, r4
 		mov	r8, #0		@ iterator for argument's buffer
 		bl	strlen		@ read
 
@@ -19,6 +25,8 @@ getArgs:	ldr	r5, [sp]	@ argc value
 		add	r4, r4, #1
 		mov	r1, r4
 		bl	strlen		@ read
+
+		b	assignArg
 
 @ ===== Argument processing =====
 assignArg:	ldr	r1, =args_buffer
@@ -28,9 +36,12 @@ assignArg:	ldr	r1, =args_buffer
 		strb	r1, [r0, #0]
 
 		bl	_printOption
+		b	preFile2Args
 
-		mov	r9, #3		@ iterator for getting filename
+preFile2Args:	mov	r9, #3		@ iterator for getting filename
 		ldr	r2, =file
+		b	getFileName
+
 getFileName:	ldr	r1, =args_buffer@ get file buffer
 		ldrb	r0, [r1, r9]
 
