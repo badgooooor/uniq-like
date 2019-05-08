@@ -12,10 +12,17 @@ getArgs:	ldr	r5, [sp]	@ argc value
 		beq	exit
 
 		cmp	r5, #2
-		beq	exit
+		beq	get1Args
 
 		cmp	r5, #3
 		beq	get2Args
+
+get1Args:	mov	r1, r4
+		mov	r8, #0
+		bl	strlen
+
+		bl	_writeBuffer
+		b	open
 
 get2Args:	mov	r1, r4
 		mov	r8, #0		@ iterator for argument's buffer
