@@ -22,7 +22,7 @@ get1Args:	mov	r1, r4
 		bl	strlen
 
 		bl	_writeBuffer
-		b	open
+		b	preFile1Args
 
 get2Args:	mov	r1, r4
 		mov	r8, #0		@ iterator for argument's buffer
@@ -45,7 +45,11 @@ assignArg:	ldr	r1, =args_buffer
 		bl	_printOption
 		b	preFile2Args
 
-preFile2Args:	mov	r9, #3		@ iterator for getting filename
+preFile1Args:	mov	r9, #0
+		ldr	r2, =file
+		b	getFileName
+
+preFile2Args:	mov	r9, #3		@ offset adder for directory
 		ldr	r2, =file
 		b	getFileName
 
@@ -55,8 +59,17 @@ getFileName:	ldr	r1, =args_buffer@ get file buffer
 		cmp	r0, #0
 		beq	postArgs
 
-		add	r8, r9, #16	@ iterator for copy filename to directory
-		strb	r0, [r2, r8]
+		cmp	r5, #3
+		beq	shiftPos2Arg
+		b	shiftPos1Arg
+
+shiftPos1Arg:	add	r8, r9, #19
+		b	afterShift
+
+shiftPos2Arg:	add	r8, r9, #16	@ iterator for copy filename to directory
+		b	afterShift
+
+afterShift:	strb	r0, [r2, r8]
 		add	r9, r9, #1
 
 		b	getFileName
