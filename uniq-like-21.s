@@ -17,13 +17,13 @@ getArgs:	ldr	r5, [sp]	@ argc value
 		cmp	r5, #3		@ 2 parameters case
 		beq	get2Args
 
-get1Arg:	mov	r1, r4
+get1Arg:	mov	r1, r4		@ == receive 1 parameter
 		mov	r8, #0
 		bl	strlen
 
 		b	preFile1Arg
 
-get2Args:	mov	r1, r4
+get2Args:	mov	r1, r4		@ == receive 2 parameters
 		mov	r8, #0		@ iterator for argument's buffer
 		bl	strlen		@ read
 
@@ -43,32 +43,32 @@ assignArg:	ldr	r1, =args_buffer
 
 		b	preFile2Args
 
-preFile1Arg:	mov	r9, #0
-		ldr	r2, =file
+preFile1Arg:	mov	r9, #0		@ set offset/iterator to directory position
+		ldr	r2, =file	@ file directory address
 		b	getFileName
 
-preFile2Args:	mov	r9, #3		@ iterator for getting filename
-		ldr	r2, =file
+preFile2Args:	mov	r9, #3		@ set offset/iterator to directory position
+		ldr	r2, =file	@ file directory address
 		b	getFileName
 
 getFileName:	ldr	r1, =args_buffer@ get file buffer
 		ldrb	r0, [r1, r9]
 
-		cmp	r0, #0
+		cmp	r0, #0		@ open file when out of string
 		beq	open
 
-		cmp	r5, #3
+		cmp	r5, #3		@ check for parameter type
 		beq	shiftPos2Args
 		b	shiftPos1Arg
 
-shiftPos1Arg:	add	r8, r9, #19
+shiftPos1Arg:	add	r8, r9, #19	@ shifting position
 		b	afterShift
 
-shiftPos2Args:	add	r8, r9, #16
+shiftPos2Args:	add	r8, r9, #16	@ shifting position
 		b	afterShift
 
-afterShift:	strb	r0, [r2, r8]
-		add	r9, r9, #1
+afterShift:	strb	r0, [r2, r8]	@ copy to directory location
+		add	r9, r9, #1	@ add up iterator
 
 		b	getFileName
 
