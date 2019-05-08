@@ -206,6 +206,12 @@ printRes:	bl	printCurr
 @ == print previous text result
 printRes2:	bl	printPrev
 		mov	r12, #1
+
+		add	r3, r4, #1			@ looking forward that it is end of file
+		ldrb	r3, [r6, r3]
+		cmp	r3, #0
+		beq	printRes
+
 		b	preCopy
 
 @ = debug : argument buffer =
