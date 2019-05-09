@@ -8,7 +8,7 @@ getArgs:	ldr	r5, [sp]	@ argc value
 		mov	r8, #8		@ argc address
 		ldr	r4, [sp, r8]
 
-		cmp	r5, #1
+		cmp	r5, #1		@ use r5 for determined arguments and mode
 		beq	stdinArg
 
 		cmp	r5, #2
@@ -20,7 +20,15 @@ getArgs:	ldr	r5, [sp]	@ argc value
 @ ===== Alternatives :: get arguments through stdin =====
 stdinArg:	bl	printMark
 		bl	getStdinArg
-		b	open
+		bl	_writeBuffer
+
+		ldr	r0, =args_buffer
+		ldrb	r1, [r0, #2]
+
+		cmp	r1, #32
+		beq	assignArg
+		mov	r5, #4		@ stdin with 1 argument
+		b	preFile1Args
 
 get1Args:	mov	r1, r4
 		mov	r8, #0
@@ -38,6 +46,7 @@ get2Args:	mov	r1, r4
 		mov	r1, r4
 		bl	strlen		@ read
 
+		bl	_writeBuffer
 		b	assignArg
 
 @ ===== Argument processing =====
@@ -69,10 +78,16 @@ getFileName:	ldr	r1, =args_buffer@ get file buffer
 		b	shiftPos1Arg
 
 shiftPos1Arg:	add	r8, r9, #19
-		b	afterShift
+		b	checkMode4
 
 shiftPos2Arg:	add	r8, r9, #16	@ iterator for copy filename to directory
 		b	afterShift
+
+checkMode4:	cmp	r5, #4
+		bne	afterShift
+
+		cmp	r0, #10		@ check carriage return
+		beq	postArgs
 
 afterShift:	strb	r0, [r2, r8]
 		add	r9, r9, #1
