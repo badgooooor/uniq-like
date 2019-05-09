@@ -9,13 +9,18 @@ getArgs:	ldr	r5, [sp]	@ argc value
 		ldr	r4, [sp, r8]
 
 		cmp	r5, #1
-		beq	exit
+		beq	stdinArg
 
 		cmp	r5, #2
 		beq	get1Args
 
 		cmp	r5, #3
 		beq	get2Args
+
+@ ===== Alternatives :: get arguments through stdin =====
+stdinArg:	bl	printMark
+		bl	getStdinArg
+		b	open
 
 get1Args:	mov	r1, r4
 		mov	r8, #0
@@ -132,6 +137,22 @@ exit:		pop	{r4, lr}
 @ Component functions
 @ =======================================================================
 
+@ = prompt for incoming argument =
+printMark:	mov	r7, #4				@ syscall number
+		mov	r0, #1				@ stdout
+		mov	r2, #2				@ string length
+		ldr	r1, =markStdin			@ address
+		swi	0
+		mov	pc, lr
+
+@ = argument input through stdin =
+getStdinArg:	mov	r7, #3				@ syscall number
+		mov	r0, #0				@ stdin is keyboard
+		mov	r2, #100			@ read character
+		ldr	r1, =args_buffer
+		swi	0
+		mov	pc, lr
+
 @ = debug : argument buffer =
 _writeBuffer:	mov	r7, #4				@ syscall number
 		mov	r0, #1				@ stdout
@@ -190,6 +211,7 @@ openErr:	mov	r4, r0
 		.data
 args_buffer:	.space	100
 args_eof:
+markStdin:	.asciz	"> "
 errmsg:		.asciz	"open failed T_T"
 errmsgend:
 args:		.asciz	"n"
