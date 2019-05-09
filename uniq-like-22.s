@@ -91,8 +91,6 @@ afterShift:	strb	r0, [r2, r8]	@ copy to directory location
 
 		b	getFileName
 
-postArgs:	bl	_printFileName
-
 @ ===== Open & read file =====
 open:		push	{r4, lr}
 		ldr	r0, =file	@ file location
@@ -214,6 +212,7 @@ copyLoop:	cmp	r5, r9
 
 endCopyLoop:	mov	pc, lr
 
+@ ===== Exit program =====
 exit:		pop	{r4, lr}
 		mov	r7, #1
 		swi	0
@@ -279,97 +278,6 @@ printRes2:	bl	printPrev
 		beq	printRes
 
 		b	preCopy
-
-@ = debug : argument buffer =
-_writeBuffer:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #(args_eof-args_buffer)	@ string length
-		ldr	r1, =args_buffer		@ address
-		swi	0
-		mov	pc, lr
-
-@ = debug : argument option =
-_printOption:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #2				@ length
-		ldr	r1, =args			@ address
-		swi	0
-		mov	pc, lr
-
-@ = debug : argument file name =
-_printFileName:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #(file_end-file)		@ strign length
-		ldr	r1, =file			@ address
-		swi	0
-		mov	pc, lr
-
-@ = debug : payload from file buffer =
-_printPayload:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #2				@ length
-		ldr	r1, =payload			@ address
-		swi	0
-		mov	pc, lr
-
-@ = debug : prompt equal =
-_promptEq:	bl	_printEQ
-		b	_printLine
-
-@ = debug : prompt unequal =
-_promptNeq:	bl	_printNEQ
-		b	_printLine
-
-@ = debug : prompt unequal since string length =
-_promptNel:	bl	_printNEL
-		b	_printLine
-
-@ = debug : prompt line =
-_printLine:	bl	_printCurr
-		bl	printCurr
-		bl	_printPrev
-		bl	printPrev
-		b	preCopy
-
-@ = debug : current line beautifully :) =
-_printCurr:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #(curr_end-curr_msg)	@ length
-		ldr	r1, =curr_msg
-		swi	0
-		mov	pc, lr
-
-@ = debug : previous line beautifully :) =
-_printPrev:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ stdout
-		mov	r2, #(prev_end-prev_msg)	@ length
-		ldr	r1, =prev_msg
-		swi	0
-		mov	pc, lr
-
-@ = debug : equal!! =
-_printEQ:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ monitor
-		mov	r2, #5				@ length
-		ldr	r1, =eq_msg			@ address
-		swi	0
-		mov	pc, lr
-
-@ = debug : not equal =
-_printNEQ:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ monitor
-		mov	r2, #6				@ length
-		ldr	r1, =neq_msg			@ address
-		swi	0
-		mov	pc, lr
-
-@ = debug : not equal from string length =
-_printNEL:	mov	r7, #4				@ syscall number
-		mov	r0, #1				@ monitor
-		mov	r2, #6				@ length
-		ldr	r1, =nel_msg
-		swi	0
-		mov	pc, lr
 
 @ = current line =
 printCurr:	mov	r7, #4				@ syscall number
