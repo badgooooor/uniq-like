@@ -30,14 +30,14 @@ stdinArg:	bl	printMark
 		mov	r5, #4		@ stdin with 1 argument
 		b	preFile1Args
 
-get1Args:	mov	r1, r4
+get1Args:	mov	r1, r4		@ == get single argument via cmd
 		mov	r8, #0
 		bl	strlen
 
 		bl	_writeBuffer
 		b	preFile1Args
 
-get2Args:	mov	r1, r4
+get2Args:	mov	r1, r4		@ == get double argument via cmd
 		mov	r8, #0		@ iterator for argument's buffer
 		bl	strlen		@ read
 
@@ -75,28 +75,23 @@ getFileName:	ldr	r1, =args_buffer@ get file buffer
 		cmp	r0, #0
 		beq	postArgs
 
-		cmp	r5, #3
-		beq	shiftPos2Arg
-
+		cmp	r5, #3		@ check mode for setting offset
+		beq	shiftPos2Arg	@ for two arguments (3 and 5)
 		cmp	r5, #5
 		beq	shiftPos2Arg
 
-		b	shiftPos1Arg
+		b	shiftPos1Arg	@ for one argument (2 and 4)
 
 shiftPos1Arg:	add	r8, r9, #19
 		b	checkMode4
 
 shiftPos2Arg:	add	r8, r9, #16	@ iterator for copy filename to directory
-		b	afterShift
 
-checkMode4:	cmp	r5, #4
-		bne	afterShift
-
-		cmp	r0, #10		@ check carriage return
+checkMode4:	cmp	r0, #10		@ check carriage return
 		beq	postArgs
 
-afterShift:	strb	r0, [r2, r8]
-		add	r9, r9, #1
+afterShift:	strb	r0, [r2, r8]	@ copy to file directory
+		add	r9, r9, #1	@ add iterator
 
 		b	getFileName
 
