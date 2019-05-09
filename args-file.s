@@ -26,7 +26,7 @@ stdinArg:	bl	printMark
 		ldrb	r1, [r0, #2]
 
 		cmp	r1, #32
-		beq	assignArg
+		beq	std2Arg
 		mov	r5, #4		@ stdin with 1 argument
 		b	preFile1Args
 
@@ -50,6 +50,8 @@ get2Args:	mov	r1, r4
 		b	assignArg
 
 @ ===== Argument processing =====
+std2Arg:	mov	r5, #5		@ stdin with 2 argument
+
 assignArg:	ldr	r1, =args_buffer
 		ldrb	r1, [r1, #1]
 
@@ -75,6 +77,10 @@ getFileName:	ldr	r1, =args_buffer@ get file buffer
 
 		cmp	r5, #3
 		beq	shiftPos2Arg
+
+		cmp	r5, #5
+		beq	shiftPos2Arg
+
 		b	shiftPos1Arg
 
 shiftPos1Arg:	add	r8, r9, #19
